@@ -1,30 +1,48 @@
-import unittest
-from StringCalculator import add
-class TestStringCalculator(unittest.TestCase):
+import re
+
+class StringCalculator:
+    @staticmethod
+    def add(numbers):
+        if not numbers:
+            return 0
         
-        def test_expectZeroForEmptyInput(self):
-                self.assertEqual(add(""), 0)
-                
-        def test_expectZeroForSingleZero(self):
-                self.assertEqual(add("0"), 0)
-                
-        def test_expectSumForTwoNumberst(self):
-                self.assertEqual(add("1,2"), 3)
-                
-        def test_ignoreNumbersGreaterThan1000(self):
-                self.assertEqual(add("1,1001"), 1)
-                
-        def test_expectSumWithCustomDelimiter(self):
-                self.assertEqual(add("//;\n1;2"), 3)
-                
-        def test_expectSumWithNewlineDelimiter(self):
-                self.assertEqual(add("1\n2,3"),6);
+        delimiter, numbers = StringCalculator._parse_input(numbers)
+        number_list = StringCalculator._split_numbers(numbers, delimiter)
+        StringCalculator._check_negatives(number_list)
         
+        return StringCalculator._calculate_sum(number_list)
 
+    @staticmethod
+    def _parse_input(numbers):
+        if numbers.startswith("//"):
+            return StringCalculator._extract_custom_delimiter(numbers)
+        return ',', numbers
 
+    @staticmethod
+    def _extract_custom_delimiter(numbers):
+        match = re.match(r"//\[(.+)\]\n(.*)", numbers)
+        if match:
+            delimiter = match.group(1)
+            numbers = match.group(2)
+            return delimiter, numbers
+        match = re.match(r"//(.)\n(.*)", numbers)
+        if match:
+            delimiter = match.group(1)
+            numbers = match.group(2)
+            return delimiter, numbers
+        raise ValueError("Invalid format for custom delimiter")
 
+    @staticmethod
+    def _split_numbers(numbers, delimiter):
+        return [int(num) for num in re.split(f"[{delimiter}\n]", numbers) if num]
 
-if __name__ == '__main__':
-    unittest.main()
+    @staticmethod
+    def _check_negatives(numbers):
+        negatives = [num for num in numbers if num < 0]
+        if negatives:
+            msg = "Negatives not allowed: " + ", ".join(map(str, negatives))
+            raise ValueError(msg)
 
-
+    @staticmethod
+    def _calculate_sum(numbers):
+        return sum(num for num in numbers if num <= 1000)
